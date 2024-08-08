@@ -1,0 +1,42 @@
+name: Spotify Cover Generator Deploy
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.x for AWS CLI
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: Setup Node.js 20.16.0
+        uses: actions/setup-node@v1
+        with:
+          node-version: 20.16.0
+
+      - name: Install AWS CLI
+        run: pip3 install awscli --upgrade --user
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ap-northeast-1
+
+      - name: Install Node Package Dependencies
+        run: npm install
+
+      - name: Build React
+        run: npm run build
+
+      - name: Deploy to S3
+        run: aws s3 sync ./build s3://spotifycover.ebeb.be --delete
