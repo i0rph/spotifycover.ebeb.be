@@ -124,7 +124,7 @@ export default function HomePage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid w-full items-start gap-6">
             <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
-              <legend className="-ml-1 px-1 text-sm font-bold">설정</legend>
+              <legend className="-ml-1 whitespace-nowrap px-1 text-sm font-bold">설정</legend>
               <div className="grid gap-3">
                 <FormField
                   control={form.control}
@@ -205,7 +205,7 @@ export default function HomePage() {
 
             {!!form.watch('type') && !!form.watch('size') && (
               <fieldset className="grid gap-6 rounded-lg border p-4">
-                <legend className="-ml-1 px-1 text-sm font-bold">링크</legend>
+                <legend className="-ml-1 whitespace-nowrap px-1 text-sm font-bold">링크</legend>
                 <div className="grid gap-3">
                   {form.watch('type') === 'track' ? (
                     <ul
