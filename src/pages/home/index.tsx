@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -144,6 +144,19 @@ export default function HomePage() {
     }
   };
 
+  const resolutions = useMemo(() => {
+    const { size } = form.watch();
+
+    if (!size) {
+      return [];
+    }
+
+    const minResolution = 300;
+    const maxResolution = size ? Math.floor((640 * size) / 100) * 100 : 600;
+
+    return Array.from({ length: (maxResolution - minResolution) / 100 + 1 }, (_, index) => minResolution + index * 100);
+  }, [form.watch('size')]);
+
   useEffect(() => {
     const { size, type } = form.watch();
     if (!!size && type === 'track') {
@@ -155,6 +168,7 @@ export default function HomePage() {
   return (
     <section className="p-4">
       <div className="relative flex flex-col items-start gap-8">
+        {JSON.stringify(resolutions)}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid w-full items-start gap-6">
             <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
@@ -214,20 +228,18 @@ export default function HomePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>해상도</FormLabel>
-                      <Select onValueChange={field.onChange}>
+                      <Select onValueChange={field.onChange} disabled={!resolutions.length}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="해상도를 선택해주세요" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Array(28)
-                            .fill(null)
-                            .map((_, index) => (
-                              <SelectItem key={`res_${index}`} value={`${300 + index * 100}`}>
-                                {300 + index * 100}x{300 + index * 100}
-                              </SelectItem>
-                            ))}
+                          {resolutions.map(resolution => (
+                            <SelectItem key={`res_${resolution}`} value={`${resolution}`}>
+                              {resolution}x{resolution}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
