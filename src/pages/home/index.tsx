@@ -18,7 +18,7 @@ const FormSchema = z
     size: z.coerce.number({ message: '그리드 크기를 선택해주세요' }).min(2).max(5),
     urls: z.array(z.string().url({ message: '올바른 URL을 입력해주세요' })).optional(),
     url: z.string().url({ message: '올바른 URL을 입력해주세요' }).optional(),
-    resolution: z.coerce.number({ message: '해상도를 선택해주세요' }).min(300).max(3000),
+    resolution: z.coerce.number({ message: '해상도를 선택해주세요' }).min(300).max(3200),
   })
   .refine(schema => {
     if (schema.type === 'track' && !schema.urls) {
