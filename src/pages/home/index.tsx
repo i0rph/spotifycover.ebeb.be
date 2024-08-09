@@ -86,6 +86,7 @@ export default function HomePage() {
         };
       });
 
+      canvas.scrollIntoView({ behavior: 'smooth' });
       setIsInitialized(true);
     } catch {
       toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다' });
