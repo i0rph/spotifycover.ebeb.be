@@ -46,11 +46,12 @@ export default function HomePage() {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsLoading(true);
     setIsInitialized(false);
-    const { type, size, urls, url, resolution } = data;
-
-    const baseUrl = 'https://eigfknmi7dboa4fqfbovgjjy6q0hwqlm.lambda-url.ap-northeast-1.on.aws/';
 
     try {
+      const { type, size, urls, url, resolution } = data;
+
+      const baseUrl = 'https://eigfknmi7dboa4fqfbovgjjy6q0hwqlm.lambda-url.ap-northeast-1.on.aws/';
+
       const response = await ky.post(baseUrl, {
         json: {
           type,
@@ -108,10 +109,14 @@ export default function HomePage() {
         return;
       }
 
-      const data = new ClipboardItem({ 'image/png': blob });
-      navigator.clipboard.write([data]);
+      try {
+        const data = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([data]);
 
-      toast({ variant: 'success', title: '이미지가 클립보드에 복사되었습니다' });
+        toast({ variant: 'success', title: '이미지가 클립보드에 복사되었습니다' });
+      } catch {
+        toast({ variant: 'destructive', title: '클립보드 복사에 실패했습니다' });
+      }
     });
   };
 
@@ -125,14 +130,18 @@ export default function HomePage() {
       return;
     }
 
-    const { type, size, resolution } = form.watch();
+    try {
+      const { type, size, resolution } = form.watch();
 
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL();
-    a.download = `spotify-cover-${type}-${size}-${resolution}px-${+new Date()}.png`;
-    a.click();
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL();
+      a.download = `spotify-cover-${type}-${size}-${resolution}px-${+new Date()}.png`;
+      a.click();
 
-    a.remove();
+      a.remove();
+    } catch {
+      toast({ variant: 'destructive', title: '이미지 다운로드에 실패했습니다' });
+    }
   };
 
   useEffect(() => {
