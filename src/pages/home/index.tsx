@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/components/ui/use-toast';
 import { useScreenDetector } from '@/hooks/useScreenDetector';
 import { cn } from '@/lib/utils';
 
@@ -85,12 +86,36 @@ export default function HomePage() {
       });
 
       setIsInitialized(true);
+    } catch {
+      toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다' });
     } finally {
       setIsLoading(false);
     }
   }
 
-  const onClickCanvas = () => {
+  const copyImage = async () => {
+    if (!isInitialized) {
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    canvas.toBlob(blob => {
+      if (!blob) {
+        return;
+      }
+
+      const data = new ClipboardItem({ 'image/png': blob });
+      navigator.clipboard.write([data]);
+
+      toast({ variant: 'success', title: '이미지가 클립보드에 복사되었습니다' });
+    });
+  };
+
+  const downloadImage = () => {
     if (!isInitialized) {
       return;
     }
@@ -278,11 +303,21 @@ export default function HomePage() {
           )}
           style={{ maxWidth: `${form.watch('resolution')}px` }}
           ref={canvasRef}
-          onClick={onClickCanvas}
+          onClick={copyImage}
         />
 
         {isInitialized && (
-          <p className="mx-auto text-center text-gray-400">이미지를 클릭하면 이미지가 다운로드됩니다.</p>
+          <div className="grid grid-cols-1 justify-items-center">
+            <Button
+              type="button"
+              onClick={downloadImage}
+              className="w-full"
+              style={{ maxWidth: `${form.watch('resolution')}px` }}
+            >
+              다운로드
+            </Button>
+            <p className="mt-2 text-center text-sm text-gray-400">이미지를 클릭하면 클립보드에 복사됩니다</p>
+          </div>
         )}
       </div>
     </section>
