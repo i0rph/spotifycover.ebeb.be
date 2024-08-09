@@ -7,6 +7,8 @@ import {
   ScrollRestoration,
 } from 'react-router-dom';
 
+import { Toaster } from '@/components/ui/toaster';
+
 import DefaultLayout from '@/components/layout';
 
 const Home = lazy(() => import('@/pages/home'));
@@ -24,6 +26,7 @@ const router = createBrowserRouter(
           <>
             <DefaultLayout>{route.element}</DefaultLayout>
             <ScrollRestoration />
+            <Toaster />
           </>
         }
         errorElement={<Error />}
