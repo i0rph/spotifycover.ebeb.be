@@ -168,7 +168,6 @@ export default function HomePage() {
   return (
     <section className="p-4">
       <div className="relative flex flex-col items-start gap-8">
-        {JSON.stringify(resolutions)}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid w-full items-start gap-6">
             <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
