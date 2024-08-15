@@ -167,7 +167,7 @@ export default function HomePage() {
   }, [form.watch('size')]);
 
   return (
-    <section className="p-4">
+    <section className="mx-auto max-w-7xl p-4">
       <div className="relative flex flex-col items-start gap-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid w-full items-start gap-6">
