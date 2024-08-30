@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import ky from 'ky';
+import ky, { HTTPError } from 'ky';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,29 +12,25 @@ import { toast } from '@/components/ui/use-toast';
 import { useScreenDetector } from '@/hooks/useScreenDetector';
 import { cn } from '@/lib/utils';
 
-const FormSchema = z
-  .object({
-    type: z.enum(['track', 'playlist'], { message: '분류를 선택해주세요' }),
-    size: z.coerce.number({ message: '그리드 크기를 선택해주세요' }).min(2).max(5),
-    urls: z.array(z.string().url({ message: '올바른 URL을 입력해주세요' })).optional(),
-    url: z.string().url({ message: '올바른 URL을 입력해주세요' }).optional(),
-    resolution: z.coerce.number({ message: '해상도를 선택해주세요' }).min(300).max(3200),
-  })
-  .refine(schema => {
-    if (schema.type === 'track' && !schema.urls) {
-      return false;
-    } else if (schema.type === 'playlist' && !schema.url) {
-      return false;
-    }
+interface ErrorResponse {
+  status: number;
+  message: string;
+  urls: string[];
+}
 
-    return true;
-  });
+const FormSchema = z.object({
+  type: z.enum(['track', 'playlist'], { message: '분류를 선택해주세요' }),
+  size: z.coerce.number({ message: '그리드 크기를 선택해주세요' }).min(2).max(5),
+  urls: z.array(z.string().url({ message: '올바른 URL을 입력해주세요' })).optional(),
+  resolution: z.coerce.number({ message: '해상도를 선택해주세요' }).min(300).max(3200),
+});
 
 export default function HomePage() {
   const { isMobile } = useScreenDetector();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [debugCount, setDebugCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -48,15 +44,15 @@ export default function HomePage() {
     setIsInitialized(false);
 
     try {
-      const { type, size, urls, url, resolution } = data;
+      const { type, size, urls, resolution } = data;
 
-      const baseUrl = 'https://eigfknmi7dboa4fqfbovgjjy6q0hwqlm.lambda-url.ap-northeast-1.on.aws/';
+      const baseUrl = 'https://b4cwvvuc9j.execute-api.ap-northeast-1.amazonaws.com/getimage';
 
       const response = await ky.post(baseUrl, {
         json: {
           type,
           size,
-          urls: type === 'track' ? urls : url,
+          urls,
         },
       });
 
@@ -88,8 +84,15 @@ export default function HomePage() {
 
       canvas.scrollIntoView({ behavior: 'smooth' });
       setIsInitialized(true);
-    } catch {
-      toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다' });
+    } catch (e: unknown) {
+      if (e instanceof HTTPError) {
+        const json = (await e.response.json()) as ErrorResponse;
+        toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다.', description: json.message });
+      } else if (e instanceof Error) {
+        toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다', description: e.message });
+      } else {
+        toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다' });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -145,6 +148,10 @@ export default function HomePage() {
     }
   };
 
+  const onClickDebug = () => {
+    setDebugCount(prev => prev + 1);
+  };
+
   const resolutions = useMemo(() => {
     const { size } = form.watch();
 
@@ -166,13 +173,22 @@ export default function HomePage() {
     }
   }, [form.watch('size')]);
 
+  useEffect(() => {
+    if (form.watch('type') === 'playlist') {
+      form.clearErrors('urls');
+      form.resetField('urls');
+    }
+  }, [form.watch('type')]);
+
   return (
     <section className="mx-auto max-w-7xl p-4">
       <div className="relative flex flex-col items-start gap-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid w-full items-start gap-6">
             <fieldset className="grid grid-cols-1 gap-6 rounded-lg border p-4 md:grid-cols-3">
-              <legend className="-ml-1 whitespace-nowrap px-1 text-sm font-bold">설정</legend>
+              <legend className="-ml-1 select-none whitespace-nowrap px-1 text-sm font-bold" onClick={onClickDebug}>
+                설정
+              </legend>
               <div className="grid gap-3">
                 <FormField
                   control={form.control}
@@ -288,7 +304,7 @@ export default function HomePage() {
                   ) : (
                     <FormField
                       control={form.control}
-                      name="url"
+                      name="urls.0"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
@@ -313,6 +329,10 @@ export default function HomePage() {
             </Button>
           </form>
         </Form>
+
+        {debugCount > 10 && (
+          <code className="w-full whitespace-pre-wrap bg-gray-200">{JSON.stringify(form.watch(), null, 2)}</code>
+        )}
       </div>
 
       <div className="space-y-2 py-10">
