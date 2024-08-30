@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { set, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import ky, { HTTPError } from 'ky';
 
@@ -12,7 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useScreenDetector } from '@/hooks/useScreenDetector';
 import { cn } from '@/lib/utils';
 
-interface ErrorResponse {
+interface APIResponse {
   status: number;
   message: string;
   urls: string[];
@@ -28,15 +28,15 @@ const FormSchema = z.object({
 export default function HomePage() {
   const { isMobile } = useScreenDetector();
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null); // 이미지 렌더링을 위한 캔버스
 
-  const [debugCount, setDebugCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [debugCount, setDebugCount] = useState(0); // 디버깅용 카운트
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태
+  const [isInitialized, setIsInitialized] = useState(false); // 이미지 초기화 상태
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    mode: 'onChange',
+    mode: 'onChange', // 입력값이 변경될 때마다 유효성 검사
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -56,12 +56,12 @@ export default function HomePage() {
         },
       });
 
-      const images = (await response.json()) as string[];
+      const { urls: imgUrls } = (await response.json()) as APIResponse;
 
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
 
-      if (!canvas || !ctx) {
+      if (!canvas || !ctx || !imgUrls) {
         return;
       }
 
@@ -70,7 +70,7 @@ export default function HomePage() {
       canvas.width = resolution;
       canvas.height = resolution;
 
-      images.forEach((image: string, index: number) => {
+      imgUrls.forEach((image: string, index: number) => {
         const x = index % size;
         const y = Math.floor(index / size);
 
@@ -86,7 +86,7 @@ export default function HomePage() {
       setIsInitialized(true);
     } catch (e: unknown) {
       if (e instanceof HTTPError) {
-        const json = (await e.response.json()) as ErrorResponse;
+        const json = (await e.response.json()) as APIResponse;
         toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다.', description: json.message });
       } else if (e instanceof Error) {
         toast({ variant: 'destructive', title: '이미지 생성에 실패했습니다', description: e.message });
@@ -152,6 +152,7 @@ export default function HomePage() {
     setDebugCount(prev => prev + 1);
   };
 
+  // 그리드 크기에 따른 해상도 목록
   const resolutions = useMemo(() => {
     const { size } = form.watch();
 
@@ -165,6 +166,7 @@ export default function HomePage() {
     return Array.from({ length: (maxResolution - minResolution) / 100 + 1 }, (_, index) => minResolution + index * 100);
   }, [form.watch('size')]);
 
+  // 트랙 그리드 크기 변경 시 URL 초기화
   useEffect(() => {
     const { size, type } = form.watch();
     if (!!size && type === 'track') {
@@ -173,12 +175,17 @@ export default function HomePage() {
     }
   }, [form.watch('size')]);
 
+  // 분류 변경 시 URL 초기화
   useEffect(() => {
-    if (form.watch('type') === 'playlist') {
-      form.clearErrors('urls');
-      form.resetField('urls');
-    }
+    form.clearErrors('urls');
+    form.resetField('urls');
   }, [form.watch('type')]);
+
+  // 해상도 변경 시 캔버스 초기화
+  useEffect(() => {
+    setIsInitialized(false);
+    canvasRef.current?.getContext('2d')?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  }, [form.watch('resolution')]);
 
   return (
     <section className="mx-auto max-w-7xl p-4">
