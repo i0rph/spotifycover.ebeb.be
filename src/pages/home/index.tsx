@@ -108,20 +108,40 @@ export default function HomePage() {
       return;
     }
 
-    canvas.toBlob(blob => {
-      if (!blob) {
-        return;
+    // https://stackoverflow.com/a/12300351
+    function dataURItoBlob(dataURI: string) {
+      // convert base64 to raw binary data held in a string
+      // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+      var byteString = atob(dataURI.split(',')[1]);
+
+      // separate out the mime component
+      var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+      // write the bytes of the string to an ArrayBuffer
+      var ab = new ArrayBuffer(byteString.length);
+
+      // create a view into the buffer
+      var ia = new Uint8Array(ab);
+
+      // set the bytes of the buffer to the correct values
+      for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
       }
 
-      try {
-        const data = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([data]);
+      // write the ArrayBuffer to a blob, and you're done
+      var blob = new Blob([ab], { type: mimeString });
+      return blob;
+    }
 
-        toast({ variant: 'success', title: '이미지가 클립보드에 복사되었습니다' });
-      } catch {
-        toast({ variant: 'destructive', title: '클립보드 복사에 실패했습니다' });
-      }
-    });
+    try {
+      const data = canvas.toDataURL('image/png');
+      const blob = dataURItoBlob(data);
+      const dataItem = new ClipboardItem({ 'image/png': blob });
+      navigator.clipboard.write([dataItem]);
+      toast({ variant: 'success', title: '이미지가 클립보드에 복사되었습니다' });
+    } catch {
+      toast({ variant: 'destructive', title: '클립보드 복사에 실패했습니다' });
+    }
   };
 
   const downloadImage = () => {
@@ -338,7 +358,10 @@ export default function HomePage() {
         </Form>
 
         {debugCount > 10 && (
-          <code className="w-full whitespace-pre-wrap bg-gray-200">{JSON.stringify(form.watch(), null, 2)}</code>
+          <code className="w-full truncate whitespace-pre-wrap bg-gray-200">
+            <span className="mb-4 block">{window.navigator.userAgent}</span>
+            <span>{JSON.stringify(form.watch(), null, 2)}</span>
+          </code>
         )}
       </div>
 
