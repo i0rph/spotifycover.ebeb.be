@@ -98,7 +98,7 @@ export default function HomePage() {
     }
   }
 
-  const copyImage = async () => {
+  const copyImage = () => {
     if (!isInitialized) {
       return;
     }
