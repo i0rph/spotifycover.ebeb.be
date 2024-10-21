@@ -8,10 +8,14 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-build
 dist
 dist-ssr
+build
+build-ssr
 *.local
+
+.eslintcache
+*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

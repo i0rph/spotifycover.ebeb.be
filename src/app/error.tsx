@@ -1,20 +1,43 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
 
-export default function Error() {
+import { Button } from '@/components/ui/button';
+
+interface ErrorState {
+  status?: number;
+  message?: string;
+}
+
+export default function ErrorBoundary() {
+  const error = useRouteError();
+
+  const [errorState, setErrorState] = useState<ErrorState | null>(null);
+
+  useEffect(() => {
+    if (isRouteErrorResponse(error)) {
+      setErrorState({
+        status: (error as { status: number }).status,
+        message: (error as { data?: string; statusText: string }).data || (error as { statusText: string }).statusText,
+      });
+    } else if (error instanceof Error) {
+      setErrorState({ message: error.message });
+    } else if (typeof error === 'string') {
+      setErrorState({ message: error });
+    } else {
+      setErrorState({ message: 'An unknown error occurred.' });
+    }
+  }, [error]);
+
   return (
-    <main className="relative isolate min-h-full">
-      <img
-        src="https://images.unsplash.com/photo-1545972154-9bb223aac798?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=3050&q=80&exp=8&con=-15&sat=-75"
-        alt=""
-        className="absolute inset-0 -z-10 h-full w-full object-cover object-top"
-      />
-      <div className="mx-auto max-w-7xl px-6 py-32 text-center sm:py-40 lg:px-8">
-        <p className="text-base font-semibold leading-8 text-white">404</p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-5xl">페이지를 찾을 수 없습니다</h1>
-        <div className="mt-10 flex justify-center">
-          <Link to="/" className="text-sm font-semibold leading-7 text-white">
-            <span aria-hidden="true">&larr;</span> 홈으로 돌아가기
-          </Link>
+    <main className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
+      <div className="text-center">
+        {!!errorState?.status && <p className="text-base font-semibold text-gray-600">{errorState.status}</p>}
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">오류가 발생했습니다</h1>
+        {!!errorState?.message && <p className="mt-6 text-base leading-7 text-gray-600">{errorState.message}</p>}
+        <div className="mt-10 flex items-center justify-center gap-x-6">
+          <Button variant="default" size="lg" asChild>
+            <Link to="/">홈으로 돌아가기</Link>
+          </Button>
         </div>
       </div>
     </main>

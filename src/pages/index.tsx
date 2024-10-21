@@ -1,41 +1,22 @@
-import { Suspense, lazy } from 'react';
-import {
-  RouterProvider,
-  Route,
-  createBrowserRouter,
-  createRoutesFromElements,
-  ScrollRestoration,
-} from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 
-import DefaultLayout from '@/components/layout';
+import TypeSelect from '@/components/typeSelect';
+import SizeSelect from '@/components/sizeSelect';
+import ResolutionSelect from '@/components/resolutionSelect';
+import UrlForm from '@/components/urlForm';
 
-const Home = lazy(() => import('@/pages/home'));
-const Error = lazy(() => import('@/app/error'));
-
-const routes = [{ path: '/', element: <Home /> }];
-
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    routes.map(route => (
-      <Route
-        key={route.path}
-        path={route.path}
-        element={
-          <>
-            <DefaultLayout>{route.element}</DefaultLayout>
-            <ScrollRestoration />
-          </>
-        }
-        errorElement={<Error />}
-      />
-    )),
-  ),
-);
-
-export default function Routes() {
+export default function Home() {
   return (
-    <Suspense fallback={null}>
-      <RouterProvider router={router} />
-    </Suspense>
+    <div
+      id="container"
+      className="grid max-h-dvh w-full snap-y snap-mandatory grid-cols-1 items-center justify-center overflow-y-hidden scroll-smooth px-4 sm:px-0"
+    >
+      <AnimatePresence>
+        <TypeSelect key="type" />
+        <SizeSelect key="size" />
+        <ResolutionSelect key="resolution" />
+        <UrlForm key="url" />
+      </AnimatePresence>
+    </div>
   );
 }
