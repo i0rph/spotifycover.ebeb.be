@@ -40,7 +40,7 @@ export default function GenerateCover({ carouselApi }: { carouselApi: CarouselAp
       const response = await ky.post(baseUrl, {
         json: {
           type,
-          size,
+          size: type === 'track' ? size : size * size,
           urls: refinedUrls,
         },
       });
@@ -54,18 +54,21 @@ export default function GenerateCover({ carouselApi }: { carouselApi: CarouselAp
         return;
       }
 
-      const refinedImgUrls = urls.reduce((acc, row, rowIndex) => {
-        const fileCnt = urls.flatMap(row => row.filter(cell => cell.type === 'file')).length;
+      const refinedImgUrls =
+        type === 'track'
+          ? urls.reduce((acc, row, rowIndex) => {
+              const fileCnt = urls.flatMap(row => row.filter(cell => cell.type === 'file')).length;
 
-        return [
-          ...acc,
-          ...row.map((cell, colIndex) => {
-            const urlIndex = rowIndex * size + colIndex - fileCnt;
-            const index = urlIndex >= 0 ? urlIndex : 0;
-            return cell.type === 'url' ? imgUrls[index] : cell.value;
-          }),
-        ];
-      }, [] as string[]);
+              return [
+                ...acc,
+                ...row.map((cell, colIndex) => {
+                  const urlIndex = rowIndex * size + colIndex - fileCnt;
+                  const index = urlIndex >= 0 ? urlIndex : 0;
+                  return cell.type === 'url' ? imgUrls[index] : cell.value;
+                }),
+              ];
+            }, [] as string[])
+          : imgUrls;
 
       const cellSize = resolution / size;
 
@@ -174,7 +177,12 @@ export default function GenerateCover({ carouselApi }: { carouselApi: CarouselAp
   };
 
   const onClickReset = () => {
+    if (resolution) {
+      canvasRef.current?.getContext('2d')?.clearRect(0, 0, resolution, resolution);
+    }
+
     carouselApi?.scrollTo(0);
+
     reset();
     setIsInitialized(false);
   };

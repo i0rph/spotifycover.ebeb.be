@@ -98,6 +98,9 @@ export default function UrlForm({ carouselApi }: { carouselApi: CarouselApi | nu
 
   useEffect(() => {
     if (type) {
+      if (type === 'playlist') {
+        form.setValue('urls', [[{ type: 'url', value: '' }]]);
+      }
       form.setValue('type', type);
     }
 
@@ -124,7 +127,7 @@ export default function UrlForm({ carouselApi }: { carouselApi: CarouselApi | nu
           }}
           className="flex h-full flex-col items-center justify-center gap-y-10 sm:p-4"
         >
-          {!!size && type === 'track' && (
+          {!!size && type === 'track' ? (
             <ul
               className="grid w-full max-w-2xl gap-4"
               style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
@@ -194,6 +197,22 @@ export default function UrlForm({ carouselApi }: { carouselApi: CarouselApi | nu
                 )),
               )}
             </ul>
+          ) : (
+            <FormField
+              control={form.control}
+              name={`urls.0.0.value`}
+              render={({ field }) => (
+                <FormItem className="w-full max-w-2xl">
+                  <FormControl>
+                    <Input
+                      className="aspect-square w-full rounded-none text-black"
+                      placeholder="URL을 입력해주세요."
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           )}
 
           <Button type="submit" variant="secondary" className="w-full max-w-2xl rounded-none">
