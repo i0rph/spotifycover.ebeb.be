@@ -1,11 +1,9 @@
-import { motion } from 'framer-motion';
-
-import BackButton from '@/components/backButton';
+import { type CarouselApi } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/stores';
 
-export default function SizeSelect() {
+export default function SizeSelect({ carouselApi }: { carouselApi: CarouselApi | null }) {
   const { size, setSize } = useStore();
 
   const handleHighlight = (event: React.MouseEvent<HTMLLIElement>) => {
@@ -70,19 +68,11 @@ export default function SizeSelect() {
   };
 
   const onClickConfirm = () => {
-    const container = document.getElementById('container');
-    container?.scrollTo({ top: container.scrollTop + window.innerHeight, behavior: 'smooth' });
+    carouselApi?.scrollNext();
   };
 
   return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ amount: 0.8 }}
-      className="flex h-dvh w-full snap-center snap-always flex-col items-center justify-center gap-y-8"
-    >
-      <BackButton />
-
+    <section className="flex h-full w-dvw flex-col items-center justify-center gap-y-8 px-12 sm:px-0">
       <h1 className="text-4xl font-bold text-white">그리드 크기 선택</h1>
 
       <div className="flex w-full justify-center">
@@ -116,6 +106,6 @@ export default function SizeSelect() {
       <Button disabled={!size} onClick={onClickConfirm} variant="secondary" className="w-full max-w-sm rounded-none">
         확인
       </Button>
-    </motion.section>
+    </section>
   );
 }

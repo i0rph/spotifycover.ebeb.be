@@ -1,21 +1,21 @@
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { Monitor } from 'lucide-react';
 
-import BackButton from '@/components/backButton';
+import { type CarouselApi } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/stores';
 
-export default function ResolutionSelect() {
+export default function ResolutionSelect({ carouselApi }: { carouselApi: CarouselApi | null }) {
   const { size, resolution, setResolution } = useStore();
 
   const resolutions = useMemo(() => {
-    const resolutions = [1000];
+    const resolutions = [];
 
     if (size) {
-      const minResolution = 300;
+      const minResolution = 500;
       const maxResolution = Math.floor((640 * size) / 100) * 100;
 
-      for (let i = minResolution; i <= maxResolution; i += 300) {
+      for (let i = minResolution; i <= maxResolution; i += 500) {
         resolutions.push(i);
       }
     }
@@ -25,45 +25,42 @@ export default function ResolutionSelect() {
     return resolutions;
   }, [size]);
 
-  const onClickResolution = (event: React.MouseEvent<HTMLLIElement>) => {
-    if (event.target instanceof HTMLLIElement) {
-      const resolution = Number(event.target.dataset.resolution);
+  const onClickResolution = (event: React.MouseEvent<HTMLUListElement>) => {
+    const target = event.target as HTMLElement;
+    const li = target.closest('li');
+
+    if (li) {
+      const resolution = Number(li.dataset.resolution);
 
       if (resolution) {
         setResolution(resolution);
-
-        const container = document.getElementById('container');
-        container?.scrollTo({ top: container.scrollTop + window.innerHeight, behavior: 'smooth' });
+        carouselApi?.scrollNext();
       }
     }
   };
 
   return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ amount: 0.8 }}
-      className="relative flex h-dvh w-full snap-center snap-always flex-col items-center justify-center gap-y-8"
-    >
-      <BackButton />
-
+    <section className="relative flex h-dvh w-full snap-center snap-always flex-col items-center justify-center gap-y-8 px-12 sm:px-0">
       <h1 className="text-4xl font-bold text-white">해상도 선택</h1>
 
-      <ul className={cn('grid gap-2 sm:gap-4', (size ?? 0) < 3 ? 'grid-cols-3' : 'grid-cols-4')}>
+      <ul className="grid w-full max-w-md grid-cols-2 gap-2 sm:gap-4" onClick={onClickResolution}>
         {resolutions.map(res => (
           <li
             key={res}
             data-resolution={res}
             className={cn(
-              'flex size-24 cursor-pointer items-center justify-center bg-white/5 text-lg font-medium text-white shadow-lg hover:bg-white/[0.07] sm:size-28 sm:text-2xl',
+              'flex h-24 cursor-pointer flex-col justify-between bg-white/5 p-4 text-lg font-medium text-white shadow-lg hover:bg-white/[0.07] sm:text-2xl',
               res === resolution && 'border border-white/50 bg-white/10',
             )}
-            onClick={onClickResolution}
           >
-            {res}
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-medium text-white sm:text-3xl">{res}</span>
+              <Monitor className="h-6 w-6 text-gray-400 transition-colors group-hover:text-white" />
+            </div>
+            <p className="text-base text-gray-400">{`${res}x${res}`}</p>
           </li>
         ))}
       </ul>
-    </motion.section>
+    </section>
   );
 }
