@@ -1,41 +1,80 @@
-import { Suspense, lazy } from 'react';
-import {
-  RouterProvider,
-  Route,
-  createBrowserRouter,
-  createRoutesFromElements,
-  ScrollRestoration,
-} from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { ChevronLeft } from 'lucide-react';
 
-import DefaultLayout from '@/components/layout';
+import { type CarouselApi, Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Button } from '@/components/ui/button';
+import TypeSelect from '@/components/typeSelect';
+import SizeSelect from '@/components/sizeSelect';
+import ResolutionSelect from '@/components/resolutionSelect';
+import UrlForm from '@/components/urlForm';
+import GenerateCover from '@/components/generateCover';
 
-const Home = lazy(() => import('@/pages/home'));
-const Error = lazy(() => import('@/app/error'));
+export default function Home() {
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [isPrevScrollable, setIsPrevScrollable] = useState(false);
+  const [isNextScrollable, setIsNextScrollable] = useState(false);
 
-const routes = [{ path: '/', element: <Home /> }];
+  const handlePrev = () => {
+    carouselApi?.scrollPrev();
+  };
 
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    routes.map(route => (
-      <Route
-        key={route.path}
-        path={route.path}
-        element={
-          <>
-            <DefaultLayout>{route.element}</DefaultLayout>
-            <ScrollRestoration />
-          </>
-        }
-        errorElement={<Error />}
-      />
-    )),
-  ),
-);
+  // const handleNext = () => {
+  //   carouselApi?.scrollNext();
+  // };
 
-export default function Routes() {
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    carouselApi.on('select', () => {
+      setIsPrevScrollable(carouselApi.canScrollPrev ?? false);
+      setIsNextScrollable(carouselApi.canScrollNext ?? false);
+    });
+  }, [carouselApi]);
+
   return (
-    <Suspense fallback={null}>
-      <RouterProvider router={router} />
-    </Suspense>
+    <div id="container" className="relative h-full w-full sm:px-0">
+      {isPrevScrollable && isNextScrollable && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="absolute left-0 z-10 h-full hover:bg-white/5 hover:text-white"
+          onClick={handlePrev}
+        >
+          <ChevronLeft />
+        </Button>
+      )}
+      {/* <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-0 z-10 h-full hover:bg-white/5 hover:text-white"
+        onClick={handleNext}
+      >
+        <ChevronRight />
+      </Button> */}
+
+      <Carousel opts={{ watchDrag: false }} setApi={setCarouselApi}>
+        <CarouselContent>
+          <CarouselItem>
+            <TypeSelect carouselApi={carouselApi} />
+          </CarouselItem>
+          <CarouselItem>
+            <SizeSelect carouselApi={carouselApi} />
+          </CarouselItem>
+          <CarouselItem>
+            <ResolutionSelect carouselApi={carouselApi} />
+          </CarouselItem>
+          <CarouselItem>
+            <UrlForm carouselApi={carouselApi} />
+          </CarouselItem>
+          <CarouselItem>
+            <GenerateCover carouselApi={carouselApi} />
+          </CarouselItem>
+        </CarouselContent>
+      </Carousel>
+    </div>
   );
 }
